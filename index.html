@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Use correct character set. -->
+  <meta charset="utf-8">
+  <!-- Tell IE to use the latest, best version. -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+  <title>Manhattan Cabs</title>
+  <script src="Cesium/Cesium.js"></script>
+  <style>
+      @import url(Cesium/Widgets/widgets.css);
+      html, body, #cesiumContainer {
+          width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+      }
+		#toolbar {
+			background: rgba(42, 42, 42, 0.8);
+			padding: 10px;
+			border-radius: 4px;
+			position:absolute;
+			top:5px;
+			left:5px;
+			color:white;
+		}
+		#toolbar .header {
+			font-weight: bold;
+		}
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="toolbar">
+	  <div class="header">Yellow Cab Vs. Green Cab Trips in Manhattan</div>
+	  <div>Inspiration and Data from <a href="https://github.com/uber/deck.gl/tree/5.1-release/examples/trips" style="color:yellow;">https://github.com/uber/deck.gl/tree/5.1-release/examples/trips</a></div>
+  </div>
+  <script>
+    var viewer = new Cesium.Viewer('cesiumContainer',{
+		shouldAnimate:true
+	});
+
+	// Set the initial camera view to look at Manhattan
+	var initialPosition = Cesium.Cartesian3.fromDegrees(-74.01881302800248, 40.69114333714821, 753);
+	var initialOrientation = new Cesium.HeadingPitchRoll.fromDegrees(21.27879878293835, -21.34390550872461, 0.0716951918898415);
+	viewer.scene.camera.setView({
+		destination: initialPosition,
+		orientation: initialOrientation,
+		endTransform: Cesium.Matrix4.IDENTITY
+	});
+
+	var tripspromise = Cesium.CzmlDataSource.load('data/trips.czml');
+	viewer.dataSources.add(tripspromise);
+
+	var color = Cesium.Color.fromBytes(74, 80, 87);
+	var promise = Cesium.GeoJsonDataSource.load('data/newyork.geojson');
+	promise.then(function(dataSource) {
+		viewer.dataSources.add(dataSource);
+
+		//Get the array of entities
+		var entities = dataSource.entities.values;
+
+		for (var i = 0; i < entities.length; i++) {
+			var entity = entities[i];
+			//Set the polygon material to our random color.
+			entity.polygon.material = color;
+			//Remove the outlines.
+			entity.polygon.outline = false;
+
+			entity.polygon.extrudedHeight = entity.properties.height;
+		}
+	}).otherwise(function(error){
+		//Display any errrors encountered while loading.
+		window.alert(error);
+	});
+  </script>
+</body>
+</html>
